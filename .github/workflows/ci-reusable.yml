@@ -3,14 +3,10 @@ name: 🛡️ CI Quality Gate (Reusable)
 on:
   workflow_call:
     inputs:
-      php-version-primary:
-        description: 'Primary PHP version (coverage + sonar)'
+      php-version:
+        description: 'PHP version'
         type: string
-        default: '8.4'
-      php-versions-matrix:
-        description: 'JSON array of additional PHP versions for compatibility checks'
-        type: string
-        default: '["8.5"]'
+        required: true
     secrets:
       GH_PERSONAL_TOKEN:
         required: true
@@ -28,10 +24,10 @@ jobs:
       - name: 🛒 Checkout code
         uses: actions/checkout@v7
 
-      - name: 🐘 Set up PHP ${{ inputs.php-version-primary }}
+      - name: 🐘 Set up PHP ${{ inputs.php-version }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ inputs.php-version-primary }}
+          php-version: ${{ inputs.php-version }}
           coverage: none
           tools: composer
 
@@ -39,8 +35,8 @@ jobs:
         uses: actions/cache@v6
         with:
           path: vendor
-          key: composer-${{ inputs.php-version-primary }}-${{ hashFiles('**/composer.lock') }}
-          restore-keys: composer-${{ inputs.php-version-primary }}-
+          key: composer-${{ inputs.php-version }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: composer-${{ inputs.php-version }}-
 
       - name: 🛡️ Authenticate Composer with GitHub Token
         env:
@@ -60,10 +56,10 @@ jobs:
       - name: 🛒 Checkout code
         uses: actions/checkout@v7
 
-      - name: 🐘 Set up PHP ${{ inputs.php-version-primary }}
+      - name: 🐘 Set up PHP ${{ inputs.php-version }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ inputs.php-version-primary }}
+          php-version: ${{ inputs.php-version }}
           coverage: none
           tools: composer
 
@@ -71,8 +67,8 @@ jobs:
         uses: actions/cache@v6
         with:
           path: vendor
-          key: composer-${{ inputs.php-version-primary }}-${{ hashFiles('**/composer.lock') }}
-          restore-keys: composer-${{ inputs.php-version-primary }}-
+          key: composer-${{ inputs.php-version }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: composer-${{ inputs.php-version }}-
 
       - name: 🛡️ Authenticate Composer with GitHub Token
         env:
@@ -87,18 +83,18 @@ jobs:
           composer phpcs
           composer phpstan
 
-  tests-primary:
-    name: 🧪 Tests (PHP ${{ inputs.php-version-primary }} + coverage)
+  tests:
+    name: 🧪 Tests (PHP ${{ inputs.php-version }} + coverage)
     runs-on: ubuntu-latest
     needs: [security, lint]
     steps:
       - name: 🛒 Checkout code
         uses: actions/checkout@v7
 
-      - name: 🐘 Set up PHP ${{ inputs.php-version-primary }}
+      - name: 🐘 Set up PHP ${{ inputs.php-version }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ inputs.php-version-primary }}
+          php-version: ${{ inputs.php-version }}
           coverage: xdebug
           tools: composer
           ini-values: xdebug.mode=coverage
@@ -107,8 +103,8 @@ jobs:
         uses: actions/cache@v6
         with:
           path: vendor
-          key: composer-${{ inputs.php-version-primary }}-${{ hashFiles('**/composer.lock') }}
-          restore-keys: composer-${{ inputs.php-version-primary }}-
+          key: composer-${{ inputs.php-version }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: composer-${{ inputs.php-version }}-
 
       - name: 🛡️ Authenticate Composer with GitHub Token
         env:
@@ -130,48 +126,10 @@ jobs:
           path: ./.runtime/coverage.xml
           retention-days: 1
 
-  tests-matrix:
-    name: 🧪 Tests (PHP ${{ matrix.php-version }})
-    runs-on: ubuntu-latest
-    needs: [security, lint]
-    strategy:
-      matrix:
-        php-version: ${{ fromJSON(inputs.php-versions-matrix) }}
-    steps:
-      - name: 🛒 Checkout code
-        uses: actions/checkout@v7
-
-      - name: 🐘 Set up PHP ${{ matrix.php-version }}
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php-version }}
-          coverage: none
-          tools: composer
-
-      - name: ♻️ Cache Composer dependencies
-        uses: actions/cache@v6
-        with:
-          path: vendor
-          key: composer-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
-          restore-keys: composer-${{ matrix.php-version }}-
-
-      - name: 🛡️ Authenticate Composer with GitHub Token
-        env:
-          GH_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
-        run: composer config -g github-oauth.github.com $GH_TOKEN
-
-      - name: 📦 Install dependencies
-        run: composer install --prefer-dist --no-progress
-
-      - name: 🧪 Run Tests
-        env:
-          XDEBUG_MODE: off
-        run: ./vendor/bin/phpunit -c phpunit.xml --display-warnings --no-coverage
-
   report:
     name: 📊 Coverage & SonarQube
     runs-on: ubuntu-latest
-    needs: [tests-primary]
+    needs: [tests]
     steps:
       - name: 🛒 Checkout code
         uses: actions/checkout@v7
@@ -207,7 +165,7 @@ jobs:
               const covered = parseInt(match[2]);
               const percent = ((covered / total) * 100).toFixed(2);
 
-              const commentBody = `## 📊 Code Coverage Report (PHP ${{ inputs.php-version-primary }})\n\n` +
+              const commentBody = `## 📊 Code Coverage Report (PHP ${{ inputs.php-version }})\n\n` +
                 `- **Statements Covered:** ${covered} / ${total}\n` +
                 `- **Coverage:** ${percent}%\n\n` +
                 `${percent >= 80 ? '✅' : percent >= 60 ? '⚠️' : '❌'} ` +
