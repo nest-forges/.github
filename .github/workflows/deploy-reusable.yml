@@ -1,0 +1,76 @@
+name: 🚀 Deploy reusable
+
+on:
+  workflow_call:
+    inputs:
+      php-version:
+        required: true
+        type: string
+        description: PHP version to use for the build (e.g. "8.4")
+      source:
+        required: true
+        type: string
+        description: Local file or path to upload to the server (e.g. "release.zip")
+      target:
+        required: true
+        type: string
+        description: Target directory on the server to upload the file to (e.g. "httpdocs/")
+    secrets:
+      GH_PERSONAL_TOKEN:
+        required: true
+        description: GitHub personal access token for authenticating private Composer packages
+      SSH_HOST:
+        required: true
+        description: SSH hostname or IP address of the deployment server
+      SSH_USERNAME:
+        required: true
+        description: SSH username for the deployment server
+      SSH_PASSWORD:
+        required: true
+        description: SSH password for the deployment server
+
+jobs:
+  deploy:
+    name: 🚀 Build and deploy release to server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ inputs.php-version }}
+
+      - name: Authenticate private packages
+        run: composer config --global github-oauth.github.com ${{ secrets.GH_PERSONAL_TOKEN }}
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run composer release
+        run: composer release
+
+      - name: Move zip to root
+        run: mv release/release.zip release.zip
+
+      - name: Upload zip to server
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          source: ${{ inputs.source }}
+          target: ${{ inputs.target }}
+
+      - name: Unzip on server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            cd ${{ inputs.target }}
+            unzip -o ${{ inputs.source }}
+            rm ${{ inputs.source }}
+            echo "Done: $(ls -al)"

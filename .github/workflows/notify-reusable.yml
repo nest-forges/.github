@@ -1,0 +1,36 @@
+name: 📧 Notify reusable
+
+on:
+  workflow_call:
+    inputs:
+      ref-name:
+        required: true
+        type: string
+        description: Git ref name (e.g. tag or branch) that was deployed
+      website:
+        required: true
+        type: string
+        description: URL of the deployed website to include in the notification email
+    secrets:
+      GMAIL_APP_PASSWORD:
+        required: true
+        description: Gmail app password used to send the notification email via SMTP
+
+jobs:
+  notify:
+    name: 📧 Notify on success
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send success email
+        uses: dawidd6/action-send-mail@v24
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: mihail.boehm@googlemail.com
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          to: mihail.boehm@googlemail.com
+          from: GitHub Actions <mihail.boehm@googlemail.com>
+          subject: "✅ Deploy ${{ inputs.ref-name }} erfolgreich"
+          body: |
+            Der Deploy von ${{ inputs.ref-name }} war erfolgreich.
+            Bitte die Website ${{ inputs.website }} prüfen und sicherstellen, dass alles funktioniert.
