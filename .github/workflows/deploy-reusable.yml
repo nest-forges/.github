@@ -87,15 +87,15 @@ jobs:
             echo "Unzipped: $(ls temporary/)"
 
             # Copy .env from shared into the unpacked release
-            cp shared/.env temporary/*/${{ inputs.env-path }}
-            echo "Copied .env to temporary/*/${{ inputs.env-path }}"
+            #cp shared/.env temporary/*/${{ inputs.env-path }}
+            #echo "Copied .env to temporary/*/${{ inputs.env-path }}"
 
             # Move everything from temporary/ into target/
-            rsync -a temporary/*/ .
-            echo "Moved release contents to $(pwd)"
+            #rsync -a temporary/*/ .
+            #echo "Moved release contents to $(pwd)"
 
             # Cleanup
-            rm -rf temporary ${{ inputs.source-zip }}
-            echo "Cleaned up temporary/ and release.zip"
+            #rm -rf temporary ${{ inputs.source-zip }}
+            #echo "Cleaned up temporary/ and release.zip"
 
-            echo "Done: $(ls -al)"
+            #echo "Done: $(ls -al)"
