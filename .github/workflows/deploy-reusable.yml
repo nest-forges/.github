@@ -90,12 +90,12 @@ jobs:
             cp shared/.env temporary/*/${{ inputs.env-path }}
             echo "Copied .env to temporary/*/${{ inputs.env-path }}"
 
-            # Move everything from temporary/ into target/
-            #rsync -a temporary/*/ .
-            #echo "Moved release contents to $(pwd)"
+            # Move forge-* folder from temporary/ into target/
+            mv temporary/* .
+            echo "Moved $(ls -d forge-*) to $(pwd)"
 
             # Cleanup
-            #rm -rf temporary ${{ inputs.source-zip }}
-            #echo "Cleaned up temporary/ and release.zip"
+            rm -rf temporary ${{ inputs.source-zip }}
+            echo "Cleaned up temporary/ and ${{ inputs.source-zip }}"
 
-            #echo "Done: $(ls -al)"
+            echo "Done: $(ls -al)"
