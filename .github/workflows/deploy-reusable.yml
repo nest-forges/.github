@@ -78,24 +78,30 @@ jobs:
             echo "Working in: $(pwd)"
 
             # Recreate temporary directory
+            echo "Recreating temporary/..."
             rm -rf temporary
             mkdir temporary
             echo "Created temporary/"
 
             # Unzip release into temporary/
+            echo "Unzipping ${{ inputs.source-zip }}..."
             unzip -q ${{ inputs.source-zip }} -d temporary
             echo "Unzipped: $(ls temporary/)"
 
             # Copy .env from shared into the unpacked release
+            echo "Copying .env..."
             cp shared/.env temporary/*/${{ inputs.env-path }}
             echo "Copied .env to temporary/*/${{ inputs.env-path }}"
 
-            # Move forge-* folder from temporary/ into target/
-            mv temporary/* .
-            echo "Moved $(ls -d forge-*) to $(pwd)"
+            # Move all files and folders (including hidden) from temporary/ into target/
+            echo "Moving release contents..."
+            mv temporary/* . 2>/dev/null || true
+            mv temporary/.* . 2>/dev/null || true
+            echo "Moved contents to $(pwd)"
 
             # Cleanup
+            echo "Cleaning up..."
             rm -rf temporary ${{ inputs.source-zip }}
             echo "Cleaned up temporary/ and ${{ inputs.source-zip }}"
 
-            echo "Done: $(ls -al)"
+            echo "✅ Done"
