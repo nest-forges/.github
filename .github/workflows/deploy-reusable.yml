@@ -105,3 +105,48 @@ jobs:
 
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "🚀  Deploy complete!"
+
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🔍  Verifying deployment..."
+
+            RELEASE_DIR=$(ls -d forge-*/ 2>/dev/null | head -1)
+
+            if [ -n "$RELEASE_DIR" ]; then
+              echo "✅ Release folder exists: $RELEASE_DIR"
+            else
+              echo "❌ Release folder not found"
+            fi
+
+            if [ -f "${RELEASE_DIR}${{ inputs.env-path }}" ]; then
+              echo "✅ .env exists at ${RELEASE_DIR}${{ inputs.env-path }}"
+            else
+              echo "❌ .env not found at ${RELEASE_DIR}${{ inputs.env-path }}"
+            fi
+
+            if [ ! -f "${{ inputs.source-zip }}" ]; then
+              echo "✅ Zip removed"
+            else
+              echo "❌ Zip still exists"
+            fi
+
+            if [ ! -d "temporary" ]; then
+              echo "✅ Temporary directory removed"
+            else
+              echo "❌ Temporary directory still exists"
+            fi
+
+            if [ -f "${RELEASE_DIR}.htaccess" ]; then
+              echo "✅ .htaccess exists"
+            else
+              echo "⚠️  .htaccess not found"
+            fi
+
+            if [ -d "${RELEASE_DIR}app" ]; then
+              echo "✅ app/ directory exists"
+            else
+              echo "❌ app/ directory not found"
+            fi
+
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "📂  Target contents:"
+            ls -la
