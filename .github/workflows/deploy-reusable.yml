@@ -18,7 +18,7 @@ on:
       env-path:
         required: true
         type: string
-        description: Path inside the unpacked release to place the .env file (e.g. "app/configs/env/.env")
+        description: Path inside the unpacked release to place the .env file (e.g. "app/configs/env")
     secrets:
       GH_PERSONAL_TOKEN:
         required: true
@@ -83,12 +83,12 @@ jobs:
             echo "Created temporary/"
 
             # Unzip release into temporary/
-            unzip -q ${{ inputs.source-zip }} -d temporary
-            echo "Unzipped: $(ls temporary/)"
+            #unzip -q ${{ inputs.source-zip }} -d temporary
+            #echo "Unzipped: $(ls temporary/)"
 
             # Copy .env from shared into the unpacked release
-            cp shared/.env temporary/*/${{ inputs.env-path }}
-            echo "Copied .env to temporary/*/${{ inputs.env-path }}"
+            #cp shared/.env temporary/*/${{ inputs.env-path }}
+            #echo "Copied .env to temporary/*/${{ inputs.env-path }}"
 
             # Move everything from temporary/ into target/
             #rsync -a temporary/*/ .
