@@ -117,9 +117,9 @@ jobs:
             fi
 
             if [ -f "$RELEASE_DIR/${{ inputs.env-path }}/.env" ]; then
-              echo "✅ .env exists at $RELEASE_DIR/${{ inputs.env-path }}/.env"
+              echo "✅ .env exists at $RELEASE_DIR/${{ inputs.env-path }}"
             else
-              echo "❌ .env not found at $RELEASE_DIR/${{ inputs.env-path }}/.env"
+              echo "❌ .env not found at $RELEASE_DIR/${{ inputs.env-path }}"
             fi
 
             if [ -f "$RELEASE_DIR/.htaccess" ]; then
