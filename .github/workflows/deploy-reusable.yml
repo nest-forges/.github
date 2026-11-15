@@ -7,6 +7,10 @@ on:
         required: true
         type: string
         description: PHP version to use for the build (e.g. "8.4")
+      source-zip:
+        required: true
+        type: string
+        description: Name of the zip file to upload (e.g. "release.zip")
       target:
         required: true
         type: string
@@ -52,7 +56,7 @@ jobs:
         run: composer release
 
       - name: Move zip to root
-        run: mv release/release.zip release.zip
+        run: mv release/${{ inputs.source-zip }} ${{ inputs.source-zip }}
 
       - name: Upload zip to server
         uses: appleboy/scp-action@v1
@@ -60,7 +64,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
-          source: release.zip
+          source: ${{ inputs.source-zip }}
           target: ${{ inputs.target }}
 
       - name: Deploy on server
@@ -79,7 +83,7 @@ jobs:
             echo "Created temporary/"
 
             # Unzip release into temporary/
-            unzip -q release.zip -d temporary
+            unzip -q ${{ inputs.source-zip }} -d temporary
             echo "Unzipped: $(ls temporary/)"
 
             # Copy .env from shared into the unpacked release
@@ -91,7 +95,7 @@ jobs:
             echo "Moved release contents to $(pwd)"
 
             # Cleanup
-            rm -rf temporary release.zip
+            rm -rf temporary ${{ inputs.source-zip }}
             echo "Cleaned up temporary/ and release.zip"
 
             echo "Done: $(ls -al)"
