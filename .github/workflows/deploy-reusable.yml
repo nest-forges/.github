@@ -116,10 +116,10 @@ jobs:
               echo "❌ Release folder not found: $RELEASE_DIR"
             fi
 
-            if [ -f "$RELEASE_DIR/${{ inputs.env-path }}" ]; then
-              echo "✅ .env exists at $RELEASE_DIR/${{ inputs.env-path }}"
+            if [ -f "$RELEASE_DIR/${{ inputs.env-path }}/.env" ]; then
+              echo "✅ .env exists at $RELEASE_DIR/${{ inputs.env-path }}/.env"
             else
-              echo "❌ .env not found at $RELEASE_DIR/${{ inputs.env-path }}"
+              echo "❌ .env not found at $RELEASE_DIR/${{ inputs.env-path }}/.env"
             fi
 
             if [ -f "$RELEASE_DIR/.htaccess" ]; then
