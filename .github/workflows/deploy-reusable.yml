@@ -7,14 +7,14 @@ on:
         required: true
         type: string
         description: PHP version to use for the build (e.g. "8.4")
-      source:
-        required: true
-        type: string
-        description: Local file or path to upload to the server (e.g. "release.zip")
       target:
         required: true
         type: string
-        description: Target directory on the server to upload the file to (e.g. "httpdocs/")
+        description: Target directory on the server (e.g. "httpdocs/")
+      env-path:
+        required: true
+        type: string
+        description: Path inside the unpacked release to place the .env file (e.g. "app/configs/env/.env")
     secrets:
       GH_PERSONAL_TOKEN:
         required: true
@@ -60,10 +60,10 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           password: ${{ secrets.SSH_PASSWORD }}
-          source: ${{ inputs.source }}
+          source: release.zip
           target: ${{ inputs.target }}
 
-      - name: Unzip on server
+      - name: Deploy on server
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -71,6 +71,27 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
             cd ${{ inputs.target }}
-            unzip -o ${{ inputs.source }}
-            rm ${{ inputs.source }}
+            echo "Working in: $(pwd)"
+
+            # Recreate temporary directory
+            rm -rf temporary
+            mkdir temporary
+            echo "Created temporary/"
+
+            # Unzip release into temporary/
+            unzip -q release.zip -d temporary
+            echo "Unzipped: $(ls temporary/)"
+
+            # Copy .env from shared into the unpacked release
+            cp shared/.env temporary/*/${{ inputs.env-path }}
+            echo "Copied .env to temporary/*/${{ inputs.env-path }}"
+
+            # Move everything from temporary/ into target/
+            rsync -a temporary/*/ .
+            echo "Moved release contents to $(pwd)"
+
+            # Cleanup
+            rm -rf temporary release.zip
+            echo "Cleaned up temporary/ and release.zip"
+
             echo "Done: $(ls -al)"
