@@ -85,7 +85,7 @@ jobs:
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "📦  Unzipping ${{ inputs.source-zip }}..."
             unzip -q ${{ inputs.source-zip }} -d temporary
-            echo "✅ Done → $(ls temporary/)"
+            echo "✅ Done → $(ls -la temporary/)"
 
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "🔑  Copying .env..."
