@@ -83,8 +83,8 @@ jobs:
             echo "Created temporary/"
 
             # Unzip release into temporary/
-            #unzip -q ${{ inputs.source-zip }} -d temporary
-            #echo "Unzipped: $(ls temporary/)"
+            unzip -q ${{ inputs.source-zip }} -d temporary
+            echo "Unzipped: $(ls temporary/)"
 
             # Copy .env from shared into the unpacked release
             #cp shared/.env temporary/*/${{ inputs.env-path }}
