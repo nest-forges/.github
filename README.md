@@ -15,7 +15,7 @@ Runs security audit, static analysis, tests with coverage and SonarQube scan.
 | Input | Required | Description |
 |---|---|---|
 | `php-version-primary` | yes | PHP version for coverage run and SonarQube (e.g. `"8.4"`) |
-| `php-versions-matrix` | no | JSON array of additional PHP versions for compatibility checks (e.g. `'["8.3","8.4"]'`). Omit to skip the matrix. |
+| `php-versions-matrix` | no | JSON array of PHP versions for matrix compatibility checks (e.g. `'["8.4","8.5"]'`). Defaults to `["8.4","8.5"]`. |
 
 **Secrets**
 

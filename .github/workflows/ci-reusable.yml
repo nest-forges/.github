@@ -8,14 +8,14 @@ on:
         type: string
         required: true
       php-versions-matrix:
-        description: 'JSON array of PHP versions for matrix compatibility checks, e.g. ["8.3","8.4"]. Default ["skip"] disables the matrix steps.'
+        description: 'JSON array of PHP versions for matrix compatibility checks, e.g. ["8.4","8.5"]'
         type: string
-        default: '["skip"]'
+        default: '["8.4","8.5"]'
     secrets:
       GH_PERSONAL_TOKEN:
         required: true
       SONAR_TOKEN:
-        required: false
+        required: true
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -138,16 +138,10 @@ jobs:
       matrix:
         php-version: ${{ fromJSON(inputs.php-versions-matrix) }}
     steps:
-      - name: ⏭️ Matrix compatibility tests disabled
-        if: matrix.php-version == 'skip'
-        run: echo "Matrix compatibility tests are disabled for this workflow call (php-versions-matrix not provided)."
-
       - name: 🛒 Checkout code
-        if: matrix.php-version != 'skip'
         uses: actions/checkout@v7
 
       - name: 🐘 Set up PHP ${{ matrix.php-version }}
-        if: matrix.php-version != 'skip'
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
@@ -155,7 +149,6 @@ jobs:
           tools: composer
 
       - name: ♻️ Cache Composer dependencies
-        if: matrix.php-version != 'skip'
         uses: actions/cache@v6
         with:
           path: vendor
@@ -163,17 +156,14 @@ jobs:
           restore-keys: composer-${{ matrix.php-version }}-
 
       - name: 🛡️ Authenticate Composer with GitHub Token
-        if: matrix.php-version != 'skip'
         env:
           GH_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: composer config -g github-oauth.github.com $GH_TOKEN
 
       - name: 📦 Install dependencies
-        if: matrix.php-version != 'skip'
         run: composer install --prefer-dist --no-progress
 
       - name: 🧪 Run Tests
-        if: matrix.php-version != 'skip'
         env:
           XDEBUG_MODE: off
         run: ./vendor/bin/phpunit -c phpunit.xml --display-warnings --no-coverage
