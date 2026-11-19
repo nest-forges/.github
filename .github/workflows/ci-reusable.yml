@@ -10,7 +10,7 @@ on:
       php-versions-matrix:
         description: 'JSON array of PHP versions for matrix compatibility checks, e.g. ["8.4","8.5"]'
         type: string
-        default: '["8.4","8.5"]'
+        default: '["8.4","8.5","8.6"]'
     secrets:
       GH_PERSONAL_TOKEN:
         required: true
