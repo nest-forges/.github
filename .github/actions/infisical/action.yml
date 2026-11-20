@@ -1,10 +1,17 @@
 name: 🛡️ Fetch secrets from Infisical
-description: Fetch secrets from Infisical and inject them into the environment.
+description: Fetch secrets from Infisical (/global) and inject them into the environment.
 
 inputs:
-  secret-path:
+  identity-id:
     required: false
-    default: ${{ vars.INFISICAL_GLOBAL_PATH }}
+    default: 1f1770ba-fa85-4158-b176-c0951bbae9ac
+    description: Infisical machine identity ID
+  project-slug:
+    required: false
+    default: nest-forges-e-re-v
+    description: Infisical project slug
+  secret-path:
+    required: true
     description: Infisical secret path (e.g. "/global" or "/myapp")
 
 runs:
@@ -13,9 +20,9 @@ runs:
     - name: Fetch secrets from Infisical (${{ inputs.secret-path }})
       uses: Infisical/secrets-action@v1.0.18
       with:
-        method: ${{ vars.INFISICAL_METHOD }}
-        identity-id: ${{ vars.INFISICAL_IDENTITY_ID }}
-        project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
-        env-slug: ${{ vars.INFISICAL_ENV_SLUG }}
+        method: oidc
+        identity-id: ${{ inputs.identity-id }}
+        project-slug: ${{ inputs.project-slug }}
+        env-slug: prod
         secret-path: ${{ inputs.secret-path }}
-        domain: ${{ vars.INFISICAL_DOMAIN }}
+        domain: https://app.infisical.com

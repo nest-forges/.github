@@ -22,6 +22,8 @@ runs:
 
     - name: Fetch secrets from Infisical (/global)
       uses: nest-forges/.github/.github/actions/infisical@use-infisical
+      with:
+        secret-path: /global
 
     - name: 🐘 Set up PHP ${{ inputs.php-version }}
       uses: shivammathur/setup-php@v2

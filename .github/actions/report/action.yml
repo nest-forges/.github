@@ -16,6 +16,8 @@ runs:
 
     - name: Fetch secrets from Infisical (/global)
       uses: nest-forges/.github/.github/actions/infisical@use-infisical
+      with:
+        secret-path: /global
 
     - name: 📥 Download coverage artifact
       uses: actions/download-artifact@v8
