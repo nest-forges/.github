@@ -1,0 +1,84 @@
+name: 📊 Checkout + Infisical secrets
+description: Checkout with full history, fetch secrets from Infisical, download coverage and run SonarQube.
+
+inputs:
+  php-version-primary:
+    required: true
+    description: PHP version shown in the coverage comment header
+
+runs:
+  using: composite
+  steps:
+    - name: 🛒 Checkout code
+      uses: actions/checkout@v7
+      with:
+        fetch-depth: 0
+
+    - name: Fetch secrets from Infisical (/global)
+      uses: nest-forges/.github/.github/actions/infisical@use-infisical
+
+    - name: 📥 Download coverage artifact
+      uses: actions/download-artifact@v8
+      with:
+        name: coverage-xml
+        path: ./.runtime
+
+    - name: 📊 Comment Coverage Report on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v9
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs');
+          const coveragePath = './.runtime/coverage.xml';
+
+          if (!fs.existsSync(coveragePath)) {
+            console.log('Coverage file not found');
+            return;
+          }
+
+          const coverage = fs.readFileSync(coveragePath, 'utf8');
+          const matches = [...coverage.matchAll(/statements="(\d+)".*?coveredstatements="(\d+)"/g)];
+
+          if (matches.length > 0) {
+            const match = matches[matches.length - 1];
+            const total = parseInt(match[1]);
+            const covered = parseInt(match[2]);
+            const percent = ((covered / total) * 100).toFixed(2);
+
+            const commentBody = `## 📊 Code Coverage Report (PHP ${{ inputs.php-version-primary }})\n\n` +
+              `- **Statements Covered:** ${covered} / ${total}\n` +
+              `- **Coverage:** ${percent}%\n\n` +
+              `${percent >= 80 ? '✅' : percent >= 60 ? '⚠️' : '❌'} ` +
+              `${percent >= 80 ? 'Great coverage!' : percent >= 60 ? 'Coverage could be improved' : 'Low coverage - please add more tests'}`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('📊 Code Coverage Report')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
+          }
+
+    - name: 🧩 SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@v8

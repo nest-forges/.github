@@ -1,0 +1,47 @@
+name: 🐘 Set up PHP + Composer
+description: Checkout, set up PHP, restore Composer cache and install dependencies.
+
+inputs:
+  php-version:
+    required: true
+    description: PHP version to set up (e.g. "8.4")
+  coverage:
+    required: false
+    default: none
+    description: Coverage driver — "none", "xdebug" or "pcov"
+  ini-values:
+    required: false
+    default: ''
+    description: Additional php.ini values (e.g. "xdebug.mode=coverage")
+
+runs:
+  using: composite
+  steps:
+    - name: 🛒 Checkout code
+      uses: actions/checkout@v7
+
+    - name: Fetch secrets from Infisical (/global)
+      uses: nest-forges/.github/.github/actions/infisical@use-infisical
+
+    - name: 🐘 Set up PHP ${{ inputs.php-version }}
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ inputs.php-version }}
+        coverage: ${{ inputs.coverage }}
+        tools: composer
+        ini-values: ${{ inputs.ini-values }}
+
+    - name: ♻️ Cache Composer dependencies
+      uses: actions/cache@v6
+      with:
+        path: vendor
+        key: composer-${{ inputs.php-version }}-${{ hashFiles('**/composer.lock') }}
+        restore-keys: composer-${{ inputs.php-version }}-
+
+    - name: 🛡️ Authenticate Composer with GitHub Token
+      shell: bash
+      run: composer config -g github-oauth.github.com "$GH_PERSONAL_TOKEN"
+
+    - name: 📦 Install dependencies
+      shell: bash
+      run: composer install --prefer-dist --no-progress

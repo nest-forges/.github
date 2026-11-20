@@ -9,20 +9,24 @@ Reusable workflows for CI, deployment and notifications across all projects in t
 ### `ci-reusable.yml` — CI Quality Gate
 
 Runs security audit, static analysis, tests with coverage and SonarQube scan.
+Setup of PHP, Composer cache and dependency installation is handled by the
+shared composite action at `.github/actions/setup-php-composer/`.
 
 **Inputs**
 
 | Input | Required | Description |
 |---|---|---|
 | `php-version-primary` | yes | PHP version for coverage run and SonarQube (e.g. `"8.4"`) |
-| `php-versions-matrix` | no | JSON array of PHP versions for matrix compatibility checks (e.g. `'["8.4","8.5"]'`). Defaults to `["8.4","8.5"]`. |
+| `php-versions-matrix` | no | JSON array of PHP versions for matrix compatibility checks (e.g. `'["8.4","8.5"]'`). Defaults to `["8.4","8.5","8.6"]`. |
 
 **Secrets**
 
 | Secret | Required | Description |
 |---|---|---|
-| `GH_PERSONAL_TOKEN` | yes | Personal access token to install private Composer packages |
 | `SONAR_TOKEN` | no | SonarQube token; omit to skip the scan |
+
+The `GH_PERSONAL_TOKEN` for private Composer packages is fetched automatically
+from Infisical via repository variables (`INFISICAL_*`).
 
 **Composer scripts expected**
 
@@ -110,7 +114,7 @@ Set these in **Settings → Secrets and variables → Actions** of each consumin
 
 | Secret | Used by |
 |---|---|
-| `GH_PERSONAL_TOKEN` | CI, Deploy |
+| `GH_PERSONAL_TOKEN` | Deploy (CI uses Infisical) |
 | `SONAR_TOKEN` | CI (optional) |
 | `SSH_HOST` | Deploy |
 | `SSH_USERNAME` | Deploy |
@@ -126,7 +130,6 @@ jobs:
   ci:
     uses: nest-forges/.github/.github/workflows/ci-reusable.yml@main
     secrets:
-      GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     with:
       php-version-primary: "8.4"
