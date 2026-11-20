@@ -56,7 +56,6 @@ fetched automatically from [Infisical](https://app.infisical.com) at runtime:
 |---|---|---|
 | `GH_PERSONAL_TOKEN` | `/global` | Composer authentication for private packages |
 | `SONAR_TOKEN` | `/global` | SonarQube Cloud scan and Quality Gate |
-| `GMAIL_APP_PASSWORD` | `/global` | (available in env, used by notify workflow) |
 
 The `GITHUB_TOKEN` used to post coverage comments on pull requests is provided
 automatically by GitHub — no manual configuration required.
@@ -169,10 +168,10 @@ Set these in **Settings → Secrets and variables → Actions** of each consumin
 | `SSH_HOST` | Deploy | — |
 | `SSH_USERNAME` | Deploy | — |
 | `SSH_PASSWORD` | Deploy | — |
-| `GMAIL_APP_PASSWORD` | Notify, CI (via Infisical) | Notify needs it as a repo secret; CI fetches it from Infisical |
+| `GMAIL_APP_PASSWORD` | Notify | — |
 
-> **CI requires no secrets in the repository.** `GH_PERSONAL_TOKEN`, `SONAR_TOKEN`
-> and `GMAIL_APP_PASSWORD` are all injected at runtime from Infisical (`/global`).
+> **CI requires no secrets in the repository.** `GH_PERSONAL_TOKEN` and `SONAR_TOKEN`
+> are injected at runtime from Infisical (`/global`).
 
 ---
 
