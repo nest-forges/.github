@@ -94,3 +94,4 @@ jobs:
         uses: nest-forges/.github/.github/actions/report@use-infisical
         with:
           php-version-primary: ${{ inputs.php-version-primary }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
