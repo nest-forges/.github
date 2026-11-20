@@ -11,16 +11,24 @@ on:
         required: true
         type: string
         description: URL of the deployed website to include in the notification email
-    secrets:
-      GMAIL_APP_PASSWORD:
+      infisical-secret-path:
         required: true
-        description: Gmail app password used to send the notification email via SMTP
+        type: string
+        description: Infisical secret path for project-specific secrets (e.g. "/global")
 
 jobs:
   notify:
     name: 📧 Notify after deploy
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
+      - name: Fetch secrets from Infisical (${{ inputs.infisical-secret-path }})
+        uses: nest-forges/.github/.github/actions/infisical@main
+        with:
+          secret-path: ${{ inputs.infisical-secret-path }}
+
       - name: Check website availability
         id: check
         run: |
@@ -39,7 +47,7 @@ jobs:
           server_address: smtp.gmail.com
           server_port: 465
           username: mihail.boehm@googlemail.com
-          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          password: ${{ env.GMAIL_APP_PASSWORD }}
           to: mihail.boehm@googlemail.com
           from: GitHub Actions <mihail.boehm@googlemail.com>
           subject: "✅ Deploy ${{ inputs.ref-name }} erfolgreich"
@@ -54,7 +62,7 @@ jobs:
           server_address: smtp.gmail.com
           server_port: 465
           username: mihail.boehm@googlemail.com
-          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          password: ${{ env.GMAIL_APP_PASSWORD }}
           to: mihail.boehm@googlemail.com
           from: GitHub Actions <mihail.boehm@googlemail.com>
           subject: "⚠️ Deploy ${{ inputs.ref-name }} – Website nicht erreichbar"

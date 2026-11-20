@@ -94,6 +94,16 @@ Coverage output must be written to `./.runtime/coverage.xml`.
 
 Builds the project with Composer, uploads a zip archive via SCP and unpacks it on the server.
 
+**No secrets need to be configured in the calling repository.** All tokens and SSH credentials are
+fetched automatically from [Infisical](https://app.infisical.com) at runtime:
+
+| Secret | Infisical path | Purpose |
+|---|---|---|
+| `GH_PERSONAL_TOKEN` | `/global` | Composer authentication for private packages |
+| `SSH_HOST` | `/krymtsov` | Hostname or IP of the deployment server |
+| `SSH_USERNAME` | `/krymtsov` | SSH user on the deployment server |
+| `SSH_PASSWORD` | `/krymtsov` | SSH password on the deployment server |
+
 **Inputs**
 
 | Input | Required | Description |
@@ -102,15 +112,11 @@ Builds the project with Composer, uploads a zip archive via SCP and unpacks it o
 | `source-zip` | yes | Name of the zip produced by `composer release` (e.g. `"release.zip"`) |
 | `target` | yes | Absolute target directory on the server (e.g. `"/var/www/myapp/"`) |
 | `env-path` | yes | Path inside the unpacked release where `.env` is placed (e.g. `"app/configs/env"`) |
+| `infisical-secret-path` | yes | Infisical path for project-specific secrets (e.g. `"/krymtsov"`) |
 
 **Secrets**
 
-| Secret | Required | Description |
-|---|---|---|
-| `GH_PERSONAL_TOKEN` | yes | Personal access token to install private Composer packages |
-| `SSH_HOST` | yes | Hostname or IP of the deployment server |
-| `SSH_USERNAME` | yes | SSH user on the deployment server |
-| `SSH_PASSWORD` | yes | SSH password on the deployment server |
+None — all secrets are managed by Infisical (see above).
 
 **Composer scripts expected**
 
@@ -138,18 +144,24 @@ The deploy user needs write access to `<target>` and the `unzip` command must be
 
 Checks whether the website is reachable after a deploy and sends an email with the result.
 
+**No secrets need to be configured in the calling repository.** All credentials are
+fetched automatically from [Infisical](https://app.infisical.com) at runtime:
+
+| Secret | Infisical path | Purpose |
+|---|---|---|
+| `GMAIL_APP_PASSWORD` | `/global` | Gmail app password for the sending account |
+
 **Inputs**
 
 | Input | Required | Description |
 |---|---|---|
 | `ref-name` | yes | Git ref that was deployed (tag or branch name) |
 | `website` | yes | Full URL to check and include in the email (e.g. `"https://example.com"`) |
+| `infisical-secret-path` | yes | Infisical path for project-specific secrets (e.g. `"/global"`) |
 
 **Secrets**
 
-| Secret | Required | Description |
-|---|---|---|
-| `GMAIL_APP_PASSWORD` | yes | Gmail app password for the sending account |
+None — all secrets are managed by Infisical (see above).
 
 The workflow performs an HTTP check with a 15-second timeout. A 2xx or 3xx response is considered success. The subject and body of the email differ depending on the result:
 
@@ -164,14 +176,9 @@ Set these in **Settings → Secrets and variables → Actions** of each consumin
 
 | Secret | Used by | Notes |
 |---|---|---|
-| `GH_PERSONAL_TOKEN` | Deploy, CI (via Infisical) | CI fetches it from Infisical — only Deploy needs it as a repo secret |
-| `SSH_HOST` | Deploy | — |
-| `SSH_USERNAME` | Deploy | — |
-| `SSH_PASSWORD` | Deploy | — |
-| `GMAIL_APP_PASSWORD` | Notify | — |
 
-> **CI requires no secrets in the repository.** `GH_PERSONAL_TOKEN` and `SONAR_TOKEN`
-> are injected at runtime from Infisical (`/global`).
+> **CI, Deploy and Notify require no secrets in the repository.** All credentials
+> are injected at runtime from Infisical (`/global` and `/krymtsov`).
 
 ---
 
@@ -188,23 +195,20 @@ jobs:
   deploy:
     needs: ci
     uses: nest-forges/.github/.github/workflows/deploy-reusable.yml@main
-    secrets:
-      GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
-      SSH_HOST: ${{ secrets.SSH_HOST }}
-      SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
-      SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
     with:
       php-version: "8.4"
       source-zip: "release.zip"
       target: "/var/www/myapp/"
       env-path: "app/configs/env"
+      infisical-secret-path: "/krymtsov"
+    # No secrets needed — all fetched from Infisical (/global and /krymtsov)
 
   notify:
     needs: deploy
     uses: nest-forges/.github/.github/workflows/notify-reusable.yml@main
-    secrets:
-      GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
     with:
       ref-name: ${{ github.ref_name }}
       website: "https://example.com"
+      infisical-secret-path: "/global"
+    # No secrets needed — GMAIL_APP_PASSWORD fetched from Infisical (/global)
 ```

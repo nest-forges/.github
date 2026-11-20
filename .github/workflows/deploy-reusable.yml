@@ -19,24 +19,18 @@ on:
         required: true
         type: string
         description: Path inside the unpacked release to place the .env file (e.g. "app/configs/env")
-    secrets:
-      GH_PERSONAL_TOKEN:
+      infisical-secret-path:
         required: true
-        description: GitHub personal access token for authenticating private Composer packages
-      SSH_HOST:
-        required: true
-        description: SSH hostname or IP address of the deployment server
-      SSH_USERNAME:
-        required: true
-        description: SSH username for the deployment server
-      SSH_PASSWORD:
-        required: true
-        description: SSH password for the deployment server
+        type: string
+        description: Infisical secret path for project-specific secrets (e.g. "/secret-path")
 
 jobs:
   deploy:
     name: 🚀 Build and deploy release to server
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -46,8 +40,13 @@ jobs:
         with:
           php-version: ${{ inputs.php-version }}
 
+      - name: Fetch secrets from Infisical (/global)
+        uses: nest-forges/.github/.github/actions/infisical@main
+        with:
+          secret-path: /global
+
       - name: Authenticate private packages
-        run: composer config --global github-oauth.github.com ${{ secrets.GH_PERSONAL_TOKEN }}
+        run: composer config --global github-oauth.github.com $GH_PERSONAL_TOKEN
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
@@ -58,21 +57,26 @@ jobs:
       - name: Move zip to root
         run: mv release/${{ inputs.source-zip }} ${{ inputs.source-zip }}
 
+      - name: Fetch secrets from Infisical (${{ inputs.infisical-secret-path }})
+        uses: nest-forges/.github/.github/actions/infisical@main
+        with:
+          secret-path: ${{ inputs.infisical-secret-path }}
+
       - name: Upload zip to server
         uses: appleboy/scp-action@v1
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USERNAME }}
+          password: ${{ env.SSH_PASSWORD }}
           source: ${{ inputs.source-zip }}
           target: ${{ inputs.target }}
 
       - name: Deploy on server
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          password: ${{ secrets.SSH_PASSWORD }}
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USERNAME }}
+          password: ${{ env.SSH_PASSWORD }}
           script: |
             cd ${{ inputs.target }}
 
