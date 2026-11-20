@@ -11,10 +11,6 @@ on:
         required: true
         type: string
         description: URL of the deployed website to include in the notification email
-      infisical-secret-path:
-        required: true
-        type: string
-        description: Infisical secret path for project-specific secrets (e.g. "/global")
 
 jobs:
   notify:
@@ -24,10 +20,10 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Fetch secrets from Infisical (${{ inputs.infisical-secret-path }})
+      - name: Fetch secrets from Infisical (/global)
         uses: nest-forges/.github/.github/actions/infisical@main
         with:
-          secret-path: ${{ inputs.infisical-secret-path }}
+          secret-path: "/global"
 
       - name: Check website availability
         id: check
