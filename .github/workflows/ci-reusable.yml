@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🐘 Setup PHP + Composer
-        uses: nest-forges/.github/.github/actions/setup-php-composer@use-infisical
+        uses: nest-forges/.github/.github/actions/setup-php-composer@main
         with:
           php-version: ${{ inputs.php-version-primary }}
 
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 🐘 Setup PHP + Composer
-        uses: nest-forges/.github/.github/actions/setup-php-composer@use-infisical
+        uses: nest-forges/.github/.github/actions/setup-php-composer@main
         with:
           php-version: ${{ inputs.php-version-primary }}
 
@@ -48,7 +48,7 @@ jobs:
     needs: [security, lint]
     steps:
       - name: 🐘 Setup PHP + Composer
-        uses: nest-forges/.github/.github/actions/setup-php-composer@use-infisical
+        uses: nest-forges/.github/.github/actions/setup-php-composer@main
         with:
           php-version: ${{ inputs.php-version-primary }}
           coverage: xdebug
@@ -76,7 +76,7 @@ jobs:
       fail-fast: false
     steps:
       - name: 🐘 Setup PHP + Composer
-        uses: nest-forges/.github/.github/actions/setup-php-composer@use-infisical
+        uses: nest-forges/.github/.github/actions/setup-php-composer@main
         with:
           php-version: ${{ matrix.php-version }}
 
@@ -91,7 +91,7 @@ jobs:
     needs: [tests-primary]
     steps:
       - name: 📊 Coverage Report & SonarQube
-        uses: nest-forges/.github/.github/actions/report@use-infisical
+        uses: nest-forges/.github/.github/actions/report@main
         with:
           php-version-primary: ${{ inputs.php-version-primary }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

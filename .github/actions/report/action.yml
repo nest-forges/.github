@@ -22,7 +22,7 @@ runs:
         fetch-depth: 0
 
     - name: Fetch secrets from Infisical (/global)
-      uses: nest-forges/.github/.github/actions/infisical@use-infisical
+      uses: nest-forges/.github/.github/actions/infisical@main
       with:
         secret-path: ${{ inputs.secret-path }}
 
@@ -90,4 +90,5 @@ runs:
           }
 
     - name: 🧩 SonarQube Scan
+      if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
       uses: SonarSource/sonarqube-scan-action@v8
