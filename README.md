@@ -4,13 +4,69 @@ Reusable workflows for CI, deployment and notifications across all projects in t
 
 ---
 
+## Composite Actions
+
+Internal building blocks used by the workflows above. Reference them with the full path and `@main`.
+
+### `.github/actions/infisical` — Fetch secrets from Infisical
+
+Fetches secrets from [Infisical](https://app.infisical.com) and injects them as environment variables.
+Uses OIDC authentication — no static credentials required in the runner.
+
+| Input | Required | Default | Description |
+|---|---|---|---|
+| `secret-path` | yes | — | Infisical path to fetch (e.g. `"/global"`) |
+| `identity-id` | no | org default | Infisical machine identity ID |
+| `project-slug` | no | org default | Infisical project slug |
+
+### `.github/actions/setup-php-composer` — Set up PHP + Composer
+
+Checkout, fetch Infisical secrets, set up PHP, restore Composer cache and install dependencies.
+
+| Input | Required | Default | Description |
+|---|---|---|---|
+| `php-version` | yes | — | PHP version (e.g. `"8.4"`) |
+| `coverage` | no | `none` | Coverage driver: `none`, `xdebug` or `pcov` |
+| `ini-values` | no | `''` | Additional `php.ini` values |
+| `secret-path` | no | `/global` | Infisical path override |
+
+### `.github/actions/report` — Coverage Report + SonarQube
+
+Checkout with full history, fetch Infisical secrets, download the coverage artifact,
+post a coverage comment on the PR and run SonarQube.
+
+| Input | Required | Default | Description |
+|---|---|---|---|
+| `php-version-primary` | yes | — | PHP version shown in the coverage comment |
+| `github-token` | yes | — | GitHub token for posting PR comments (pass `${{ secrets.GITHUB_TOKEN }}`) |
+| `secret-path` | no | `/global` | Infisical path override |
+
+---
+
 ## Workflows
 
 ### `ci-reusable.yml` — CI Quality Gate
 
 Runs security audit, static analysis, tests with coverage and SonarQube scan.
+
+**No secrets need to be configured in the calling repository.** All tokens are
+fetched automatically from [Infisical](https://app.infisical.com) at runtime:
+
+| Secret | Infisical path | Purpose |
+|---|---|---|
+| `GH_PERSONAL_TOKEN` | `/global` | Composer authentication for private packages |
+| `SONAR_TOKEN` | `/global` | SonarQube Cloud scan and Quality Gate |
+| `GMAIL_APP_PASSWORD` | `/global` | (available in env, used by notify workflow) |
+
+The `GITHUB_TOKEN` used to post coverage comments on pull requests is provided
+automatically by GitHub — no manual configuration required.
+
+SonarQube runs only on `main` and pull requests; feature branches skip the scan
+because the SonarCloud Free plan does not support branch analysis.
+
 Setup of PHP, Composer cache and dependency installation is handled by the
-shared composite action at `.github/actions/setup-php-composer/`.
+composite action at `.github/actions/setup-php-composer/`, which calls
+`.github/actions/infisical/` to inject the secrets before each job.
 
 **Inputs**
 
@@ -21,12 +77,7 @@ shared composite action at `.github/actions/setup-php-composer/`.
 
 **Secrets**
 
-| Secret | Required | Description |
-|---|---|---|
-| `SONAR_TOKEN` | no | SonarQube token; omit to skip the scan |
-
-The `GH_PERSONAL_TOKEN` for private Composer packages is fetched automatically
-from Infisical via repository variables (`INFISICAL_*`).
+None — all secrets are managed by Infisical (see above).
 
 **Composer scripts expected**
 
@@ -112,14 +163,16 @@ The workflow performs an HTTP check with a 15-second timeout. A 2xx or 3xx respo
 
 Set these in **Settings → Secrets and variables → Actions** of each consuming repository, or at organisation level to share them.
 
-| Secret | Used by |
-|---|---|
-| `GH_PERSONAL_TOKEN` | Deploy (CI uses Infisical) |
-| `SONAR_TOKEN` | CI (optional) |
-| `SSH_HOST` | Deploy |
-| `SSH_USERNAME` | Deploy |
-| `SSH_PASSWORD` | Deploy |
-| `GMAIL_APP_PASSWORD` | Notify |
+| Secret | Used by | Notes |
+|---|---|---|
+| `GH_PERSONAL_TOKEN` | Deploy, CI (via Infisical) | CI fetches it from Infisical — only Deploy needs it as a repo secret |
+| `SSH_HOST` | Deploy | — |
+| `SSH_USERNAME` | Deploy | — |
+| `SSH_PASSWORD` | Deploy | — |
+| `GMAIL_APP_PASSWORD` | Notify, CI (via Infisical) | Notify needs it as a repo secret; CI fetches it from Infisical |
+
+> **CI requires no secrets in the repository.** `GH_PERSONAL_TOKEN`, `SONAR_TOKEN`
+> and `GMAIL_APP_PASSWORD` are all injected at runtime from Infisical (`/global`).
 
 ---
 
@@ -129,10 +182,9 @@ Set these in **Settings → Secrets and variables → Actions** of each consumin
 jobs:
   ci:
     uses: nest-forges/.github/.github/workflows/ci-reusable.yml@main
-    secrets:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     with:
       php-version-primary: "8.4"
+    # No secrets needed — GH_PERSONAL_TOKEN and SONAR_TOKEN are fetched from Infisical
 
   deploy:
     needs: ci
