@@ -5,6 +5,10 @@ inputs:
   php-version-primary:
     required: true
     description: PHP version shown in the coverage comment header
+  secret-path:
+    required: false
+    default: /global
+    description: Infisical secret path (e.g. "/global" or "/myapp")
 
 runs:
   using: composite
@@ -17,7 +21,7 @@ runs:
     - name: Fetch secrets from Infisical (/global)
       uses: nest-forges/.github/.github/actions/infisical@use-infisical
       with:
-        secret-path: /global
+        secret-path: ${{ inputs.secret-path }}
 
     - name: 📥 Download coverage artifact
       uses: actions/download-artifact@v8

@@ -13,6 +13,10 @@ inputs:
     required: false
     default: ''
     description: Additional php.ini values (e.g. "xdebug.mode=coverage")
+  secret-path:
+    required: false
+    default: /global
+    description: Infisical secret path (e.g. "/global" or "/myapp")
 
 runs:
   using: composite
@@ -23,7 +27,7 @@ runs:
     - name: Fetch secrets from Infisical (/global)
       uses: nest-forges/.github/.github/actions/infisical@use-infisical
       with:
-        secret-path: /global
+        secret-path: ${{ inputs.secret-path }}
 
     - name: 🐘 Set up PHP ${{ inputs.php-version }}
       uses: shivammathur/setup-php@v2
