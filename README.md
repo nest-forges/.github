@@ -82,6 +82,7 @@ None — all secrets are managed by Infisical (see above).
 
 | Script | Purpose |
 |---|---|
+| `composer validate --strict` | Validate `composer.json` structure |
 | `composer phpcs` | Code style check |
 | `composer phpstan` | Static analysis |
 

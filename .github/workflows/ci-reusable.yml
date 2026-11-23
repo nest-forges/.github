@@ -39,6 +39,7 @@ jobs:
 
       - name: 🔍 Run Static Analysis & Code Quality Checks
         run: |
+          composer validate --strict
           composer phpcs
           composer phpstan
 
