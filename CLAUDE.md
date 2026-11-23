@@ -145,6 +145,28 @@ section above).
 
 ---
 
+## Git commit style
+
+Every commit message must start with a Conventional Commits prefix:
+
+| Prefix | Use for |
+|---|---|
+| `feat:` | New feature or workflow |
+| `fix:` | Bug fix |
+| `chore:` | Maintenance, dependency updates, config |
+| `docs:` | Documentation only |
+| `refactor:` | Code change that neither fixes a bug nor adds a feature |
+| `ci:` | Changes to CI/CD workflows or actions |
+| `test:` | Adding or updating tests |
+| `style:` | Formatting, whitespace, no logic change |
+
+Optionally add a scope in parentheses when it is obvious from context:
+`<prefix>(<scope>): <subject>` — e.g. `ci(notify): simplify send-mail steps`.
+Common scopes in this repo: `ci`, `deploy`, `notify`, `actions`, `readme`.
+Omit the scope when the change spans multiple areas or the prefix already implies it.
+
+---
+
 ## Validation before finishing
 
 Before completing any task that adds or modifies workflow files, confirm:

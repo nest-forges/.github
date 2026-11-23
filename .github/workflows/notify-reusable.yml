@@ -25,19 +25,35 @@ jobs:
         with:
           secret-path: "/global"
 
-      - name: Check website availability
+      - name: 🛡️ Validate required secrets
+        run: |
+          if [ -z "$GMAIL_APP_PASSWORD" ]; then
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "❌  Required secrets are missing."
+            echo "    Make sure all of the following are"
+            echo "    present in Infisical and exported:"
+            echo "  ✗ GMAIL_APP_PASSWORD"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            exit 1
+          fi
+          echo "✅ All required secrets are present."
+
+      - name: 🌐 Check website availability
         id: check
         run: |
           HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 15 "${{ inputs.website }}")
           echo "status=$HTTP_STATUS" >> "$GITHUB_OUTPUT"
           if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
-            echo "ok=true" >> "$GITHUB_OUTPUT"
+            echo "ok=true"  >> "$GITHUB_OUTPUT"
+            echo "subject=✅ Deploy ${{ inputs.ref-name }} erfolgreich" >> "$GITHUB_OUTPUT"
+            echo "body=Der Deploy von ${{ inputs.ref-name }} war erfolgreich. Die Website ${{ inputs.website }} ist erreichbar (HTTP ${HTTP_STATUS})." >> "$GITHUB_OUTPUT"
           else
             echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "subject=⚠️ Deploy ${{ inputs.ref-name }} – Website nicht erreichbar" >> "$GITHUB_OUTPUT"
+            echo "body=Der Deploy von ${{ inputs.ref-name }} wurde abgeschlossen, aber die Website ${{ inputs.website }} antwortet mit HTTP ${HTTP_STATUS}. Bitte manuell prüfen." >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Send success email
-        if: steps.check.outputs.ok == 'true'
+      - name: 📧 Send notification email
         uses: dawidd6/action-send-mail@v24
         with:
           server_address: smtp.gmail.com
@@ -46,23 +62,5 @@ jobs:
           password: ${{ env.GMAIL_APP_PASSWORD }}
           to: mihail.boehm@googlemail.com
           from: GitHub Actions <mihail.boehm@googlemail.com>
-          subject: "✅ Deploy ${{ inputs.ref-name }} erfolgreich"
-          body: |
-            Der Deploy von ${{ inputs.ref-name }} war erfolgreich.
-            Die Website ${{ inputs.website }} ist erreichbar (HTTP ${{ steps.check.outputs.status }}).
-
-      - name: Send failure email
-        if: steps.check.outputs.ok == 'false'
-        uses: dawidd6/action-send-mail@v24
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: mihail.boehm@googlemail.com
-          password: ${{ env.GMAIL_APP_PASSWORD }}
-          to: mihail.boehm@googlemail.com
-          from: GitHub Actions <mihail.boehm@googlemail.com>
-          subject: "⚠️ Deploy ${{ inputs.ref-name }} – Website nicht erreichbar"
-          body: |
-            Der Deploy von ${{ inputs.ref-name }} wurde abgeschlossen, aber die Website
-            ${{ inputs.website }} antwortet mit HTTP ${{ steps.check.outputs.status }}.
-            Bitte manuell prüfen.
+          subject: ${{ steps.check.outputs.subject }}
+          body: ${{ steps.check.outputs.body }}

@@ -148,16 +148,12 @@ fetched automatically from [Infisical](https://app.infisical.com) at runtime:
 |---|---|---|
 | `ref-name` | yes | Git ref that was deployed (tag or branch name) |
 | `website` | yes | Full URL to check and include in the email (e.g. `"https://example.com"`) |
-| `infisical-secret-path` | yes | Infisical secret path for app-specific secrets (e.g. `"/global"`) |
 
 **Secrets**
 
 None — all secrets are managed by Infisical (see above).
 
-The workflow performs an HTTP check with a 15-second timeout. A 2xx or 3xx response is considered success. The subject and body of the email differ depending on the result:
-
-- `✅ Deploy <ref> erfolgreich` — site is reachable, HTTP status shown
-- `⚠️ Deploy <ref> – Website nicht erreichbar` — deploy completed but site returned an unexpected status
+The workflow performs an HTTP check with a 15-second timeout. A 2xx or 3xx response is considered success; the email subject and body reflect the result.
 
 ---
 
@@ -200,6 +196,5 @@ jobs:
     with:
       ref-name: ${{ github.ref_name }}
       website: "https://example.com"
-      infisical-secret-path: "/global"
     # No secrets needed — GMAIL_APP_PASSWORD fetched from Infisical (/global)
 ```
