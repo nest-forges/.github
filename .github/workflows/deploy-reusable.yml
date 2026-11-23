@@ -45,6 +45,41 @@ jobs:
         with:
           secret-path: /global
 
+      - name: Fetch secrets from Infisical (${{ inputs.infisical-secret-path }})
+        uses: nest-forges/.github/.github/actions/infisical@main
+        with:
+          secret-path: ${{ inputs.infisical-secret-path }}
+
+      - name: 🛡️ Validate required secrets
+        run: |
+          MISSING=""
+
+          check() {
+            local name="$1"
+            local value="$2"
+            if [ -z "$value" ]; then
+              MISSING="$MISSING\n  ✗ $name"
+            fi
+          }
+
+          check "GH_PERSONAL_TOKEN" "$GH_PERSONAL_TOKEN"
+          check "SSH_HOST"          "$SSH_HOST"
+          check "SSH_USERNAME"      "$SSH_USERNAME"
+          check "SSH_PASSWORD"      "$SSH_PASSWORD"
+          check "ENV_PROD"          "$ENV_PROD"
+
+          if [ -n "$MISSING" ]; then
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "❌  Required secrets are missing."
+            echo "    Make sure all of the following are"
+            echo "    present in Infisical and exported:"
+            printf "$MISSING\n"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            exit 1
+          fi
+
+          echo "✅ All required secrets are present."
+
       - name: Authenticate private packages
         run: composer config --global github-oauth.github.com $GH_PERSONAL_TOKEN
 
@@ -56,11 +91,6 @@ jobs:
 
       - name: Move zip to root
         run: mv release/${{ inputs.source-zip }} ${{ inputs.source-zip }}
-
-      - name: Fetch secrets from Infisical (${{ inputs.infisical-secret-path }})
-        uses: nest-forges/.github/.github/actions/infisical@main
-        with:
-          secret-path: ${{ inputs.infisical-secret-path }}
 
       - name: Upload zip to server
         uses: appleboy/scp-action@v1
@@ -93,8 +123,8 @@ jobs:
             echo "✅ Done → $RELEASE_DIR"
 
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "🔑  Copying .env..."
-            cp shared/.env temporary/*/${{ inputs.env-path }}
+            echo "🔑  Creating .env from Infisical..."
+            echo "${{ env.ENV_PROD }}" > temporary/*/${{ inputs.env-path }}/.env
             echo "✅ Done → temporary/*/${{ inputs.env-path }}"
 
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

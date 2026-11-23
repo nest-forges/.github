@@ -100,9 +100,10 @@ fetched automatically from [Infisical](https://app.infisical.com) at runtime:
 | Secret | Infisical path | Purpose |
 |---|---|---|
 | `GH_PERSONAL_TOKEN` | `/global` | Composer authentication for private packages |
-| `SSH_HOST` | `/krymtsov` | Hostname or IP of the deployment server |
-| `SSH_USERNAME` | `/krymtsov` | SSH user on the deployment server |
-| `SSH_PASSWORD` | `/krymtsov` | SSH password on the deployment server |
+| `SSH_HOST` | project path | Hostname or IP of the deployment server |
+| `SSH_USERNAME` | project path | SSH user on the deployment server |
+| `SSH_PASSWORD` | project path | SSH password on the deployment server |
+| `ENV_PROD` | project path | Full contents of the `.env` file written into the release |
 
 **Inputs**
 
@@ -112,7 +113,7 @@ fetched automatically from [Infisical](https://app.infisical.com) at runtime:
 | `source-zip` | yes | Name of the zip produced by `composer release` (e.g. `"release.zip"`) |
 | `target` | yes | Absolute target directory on the server (e.g. `"/var/www/myapp/"`) |
 | `env-path` | yes | Path inside the unpacked release where `.env` is placed (e.g. `"app/configs/env"`) |
-| `infisical-secret-path` | yes | Infisical path for project-specific secrets (e.g. `"/krymtsov"`) |
+| `infisical-secret-path` | yes | Infisical secret path for app-specific secrets (e.g. `"/myapp"`) |
 
 **Secrets**
 
@@ -126,17 +127,7 @@ None — all secrets are managed by Infisical (see above).
 
 #### Server prerequisites
 
-The target directory must contain a `shared/` folder with the environment file before the first deploy:
-
-```
-<target>/
-└── shared/
-    └── .env          ← must exist before first deploy
-```
-
-The workflow copies `shared/.env` into the unpacked release at `<env-path>/.env` on every deploy, so the file is never committed to the repository.
-
-The deploy user needs write access to `<target>` and the `unzip` command must be available on the server.
+The deploy user needs write access to `<target>` and the `unzip` command must be available on the server. No `shared/` folder or pre-existing `.env` file is required — the `.env` is created from the `ENV_PROD` secret fetched from Infisical on every deploy.
 
 ---
 
@@ -157,7 +148,7 @@ fetched automatically from [Infisical](https://app.infisical.com) at runtime:
 |---|---|---|
 | `ref-name` | yes | Git ref that was deployed (tag or branch name) |
 | `website` | yes | Full URL to check and include in the email (e.g. `"https://example.com"`) |
-| `infisical-secret-path` | yes | Infisical path for project-specific secrets (e.g. `"/global"`) |
+| `infisical-secret-path` | yes | Infisical secret path for app-specific secrets (e.g. `"/global"`) |
 
 **Secrets**
 
@@ -178,7 +169,7 @@ Set these in **Settings → Secrets and variables → Actions** of each consumin
 |---|---|---|
 
 > **CI, Deploy and Notify require no secrets in the repository.** All credentials
-> are injected at runtime from Infisical (`/global` and `/krymtsov`).
+> are injected at runtime from Infisical (`/global` and the app-specific secret path).
 
 ---
 
@@ -200,8 +191,8 @@ jobs:
       source-zip: "release.zip"
       target: "/var/www/myapp/"
       env-path: "app/configs/env"
-      infisical-secret-path: "/krymtsov"
-    # No secrets needed — all fetched from Infisical (/global and /krymtsov)
+      infisical-secret-path: "/myproject"
+    # No secrets needed — all fetched from Infisical (/global and app-specific secret path)
 
   notify:
     needs: deploy
