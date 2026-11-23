@@ -107,6 +107,7 @@ jobs:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USERNAME }}
           password: ${{ env.SSH_PASSWORD }}
+          envs: ENV_PROD
           script: |
             cd ${{ inputs.target }}
 
@@ -119,19 +120,25 @@ jobs:
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "📦  Unzipping ${{ inputs.source-zip }}..."
             unzip -q ${{ inputs.source-zip }} -d temporary
-            RELEASE_DIR=$(ls -d temporary/*/ | head -1 | sed 's|temporary/||' | tr -d '/')
+            RELEASE_DIR=$(ls -d temporary/*/ 2>/dev/null | head -1 | sed 's|temporary/||' | tr -d '/')
+            if [ -z "$RELEASE_DIR" ]; then
+              echo "❌ Could not detect release directory inside zip"
+              exit 1
+            fi
             echo "✅ Done → $RELEASE_DIR"
 
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "🔑  Creating .env from Infisical..."
-            echo "${{ env.ENV_PROD }}" > temporary/*/${{ inputs.env-path }}/.env
-            echo "✅ Done → temporary/*/${{ inputs.env-path }}"
+            echo "🚚  Moving release contents to target..."
+            shopt -s dotglob
+            mv temporary/* .
+            shopt -u dotglob
+            echo "✅ Done"
 
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "🚚  Moving release contents to target..."
-            mv temporary/* . 2>/dev/null || true
-            mv temporary/.* . 2>/dev/null || true
-            echo "✅ Done"
+            echo "🔑  Creating .env from Infisical..."
+            mkdir -p "$RELEASE_DIR/${{ inputs.env-path }}"
+            printf '%s' "$ENV_PROD" > "$RELEASE_DIR/${{ inputs.env-path }}/.env"
+            echo "✅ Done → $RELEASE_DIR/${{ inputs.env-path }}/.env"
 
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "🧹  Cleaning up..."
