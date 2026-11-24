@@ -100,7 +100,9 @@ jobs:
         run: cp app/configs/env/.example.env app/configs/env/.env
 
       - name: 🚀 Start PHP built-in server
-        run: php -S localhost:8080 router.php &
+        run: |
+          php -S localhost:8080 ci/router.php &
+          until curl -s http://localhost:8080/de > /dev/null; do sleep 0.2; done
 
       - name: 🟩 Set up Node
         uses: actions/setup-node@v7
