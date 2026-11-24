@@ -11,6 +11,10 @@ on:
         description: 'JSON array of PHP versions for matrix compatibility checks, e.g. ["8.4","8.5"]'
         type: string
         default: '["8.4","8.5","8.6"]'
+      e2e-router:
+        description: 'Path to the PHP built-in server router script for E2E tests'
+        type: string
+        default: 'ci/router.php'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -101,7 +105,7 @@ jobs:
 
       - name: 🚀 Start PHP built-in server
         run: |
-          php -S localhost:8080 ci/router.php &
+          php -S localhost:8080 ${{ inputs.e2e-router }} &
           until curl -s http://localhost:8080/de > /dev/null; do sleep 0.2; done
 
       - name: 🟩 Set up Node
