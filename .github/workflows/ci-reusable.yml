@@ -15,6 +15,10 @@ on:
         description: 'Path to the PHP built-in server router script for E2E tests'
         type: string
         default: 'ci/router.php'
+      skip-e2e:
+        description: 'Skip E2E tests (for projects without Playwright setup)'
+        type: boolean
+        default: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -93,6 +97,7 @@ jobs:
   e2e:
     name: 🎭 E2E Tests
     runs-on: ubuntu-latest
+    if: ${{ !inputs.skip-e2e }}
     needs: [security, lint]
     steps:
       - name: 🐘 Setup PHP + Composer

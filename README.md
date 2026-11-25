@@ -73,6 +73,8 @@ composite action at `.github/actions/setup-php-composer/`, which calls
 |---|---|---|
 | `php-version-primary` | yes | PHP version for coverage run and SonarQube (e.g. `"8.4"`) |
 | `php-versions-matrix` | no | JSON array of PHP versions for matrix compatibility checks (e.g. `'["8.4","8.5"]'`). Defaults to `["8.4","8.5","8.6"]`. |
+| `e2e-router` | no | Path to the PHP built-in server router script for E2E tests. Defaults to `ci/router.php`. |
+| `skip-e2e` | no | Skip E2E tests (for projects without Playwright setup). Defaults to `false`. |
 
 **Secrets**
 
