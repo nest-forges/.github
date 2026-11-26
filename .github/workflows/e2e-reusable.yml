@@ -13,9 +13,8 @@ on:
         default: "24"
         description: Node.js version to use (default "24")
       e2e-command:
-        required: false
+        required: true
         type: string
-        default: "e2e"
         description: npm script to run (default "e2e", runs "npm run e2e")
 
 jobs:
