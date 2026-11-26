@@ -15,7 +15,7 @@ on:
       e2e-command:
         required: true
         type: string
-        description: npm script to run (default "e2e", runs "npm run e2e")
+        description: npm script to run for remote E2E tests (e.g. "e2e:remote")
 
 jobs:
   e2e:

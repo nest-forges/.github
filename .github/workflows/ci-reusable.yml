@@ -11,14 +11,14 @@ on:
         description: 'JSON array of PHP versions for matrix compatibility checks, e.g. ["8.4","8.5"]'
         type: string
         default: '["8.4","8.5","8.6"]'
-      e2e-router:
-        description: 'Path to the PHP built-in server router script for E2E tests'
-        type: string
-        default: 'ci/router.php'
       skip-e2e:
         description: 'Skip E2E tests (for projects without Playwright setup)'
         type: boolean
         default: false
+      e2e-command:
+        required: true
+        type: string
+        description: npm script to run for E2E tests
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -108,11 +108,6 @@ jobs:
       - name: 📄 Copy .env from example
         run: cp app/configs/env/.example.env app/configs/env/.env
 
-      - name: 🚀 Start PHP built-in server
-        run: |
-          php -S localhost:8080 ${{ inputs.e2e-router }} &
-          until curl -s http://localhost:8080/de > /dev/null; do sleep 0.2; done
-
       - name: 🟩 Set up Node
         uses: actions/setup-node@v7
         with:
@@ -125,9 +120,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: 🧪 Run E2E tests
-        run: npm run e2e
-        env:
-          BASE_URL: http://localhost:8080
+        run: npm run ${{ inputs.e2e-command }}
 
       - name: 📤 Upload Playwright report on failure
         if: failure()
