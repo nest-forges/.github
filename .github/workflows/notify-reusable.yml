@@ -11,6 +11,16 @@ on:
         required: true
         type: string
         description: URL of the deployed website to include in the notification email
+      deploy-result:
+        required: false
+        type: string
+        default: 'skipped'
+        description: Result of the deploy job (success, failure, skipped, cancelled)
+      remote-result:
+        required: false
+        type: string
+        default: 'skipped'
+        description: Result of the remote/e2e job (success, failure, skipped, cancelled)
 
 jobs:
   notify:
@@ -38,19 +48,23 @@ jobs:
           fi
           echo "✅ All required secrets are present."
 
-      - name: 🌐 Check website availability
+      - name: 📋 Build notification
         id: check
         run: |
-          HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}" --max-time 15 "${{ inputs.website }}")
-          echo "status=$HTTP_STATUS" >> "$GITHUB_OUTPUT"
-          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
-            echo "ok=true"  >> "$GITHUB_OUTPUT"
-            echo "subject=✅ Deploy ${{ inputs.ref-name }} erfolgreich" >> "$GITHUB_OUTPUT"
-            echo "body=Der Deploy von ${{ inputs.ref-name }} war erfolgreich. Die Website ${{ inputs.website }} ist erreichbar (HTTP ${HTTP_STATUS})." >> "$GITHUB_OUTPUT"
+          DEPLOY_RESULT="${{ inputs.deploy-result }}"
+          REMOTE_RESULT="${{ inputs.remote-result }}"
+          REF="${{ inputs.ref-name }}"
+          WEBSITE="${{ inputs.website }}"
+
+          if [ "$DEPLOY_RESULT" != "success" ]; then
+            echo "subject=❌ Deploy $REF fehlgeschlagen" >> "$GITHUB_OUTPUT"
+            echo "body=Der Deploy von $REF ist fehlgeschlagen (Job-Status: ${DEPLOY_RESULT}). Die E2E-Tests wurden nicht ausgeführt. Bitte die Deploy-Logs in GitHub Actions prüfen." >> "$GITHUB_OUTPUT"
+          elif [ "$REMOTE_RESULT" != "success" ]; then
+            echo "subject=❌ E2E-Tests $REF fehlgeschlagen" >> "$GITHUB_OUTPUT"
+            echo "body=Der Deploy von $REF war erfolgreich, aber die E2E-Tests sind fehlgeschlagen (Job-Status: ${REMOTE_RESULT}). Bitte die Test-Logs in GitHub Actions prüfen." >> "$GITHUB_OUTPUT"
           else
-            echo "ok=false" >> "$GITHUB_OUTPUT"
-            echo "subject=⚠️ Deploy ${{ inputs.ref-name }} – Website nicht erreichbar" >> "$GITHUB_OUTPUT"
-            echo "body=Der Deploy von ${{ inputs.ref-name }} wurde abgeschlossen, aber die Website ${{ inputs.website }} antwortet mit HTTP ${HTTP_STATUS}. Bitte manuell prüfen." >> "$GITHUB_OUTPUT"
+            echo "subject=✅ Deploy $REF erfolgreich" >> "$GITHUB_OUTPUT"
+            echo "body=Der Deploy von $REF war erfolgreich und alle E2E-Tests haben bestanden. Die Website ist erreichbar: $WEBSITE" >> "$GITHUB_OUTPUT"
           fi
 
       - name: 📧 Send notification email
