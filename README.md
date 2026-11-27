@@ -30,6 +30,17 @@ Checkout, fetch Infisical secrets, set up PHP, restore Composer cache and instal
 | `ini-values` | no | `''` | Additional `php.ini` values |
 | `secret-path` | no | `/global` | Infisical path override |
 
+### `.github/actions/e2e` — Run E2E tests
+
+Set up PHP + Composer, optionally copy `.env`, run E2E tests and upload a report on failure.
+
+| Input | Required | Default | Description |
+|---|---|---|---|
+| `php-version` | yes | — | PHP version to set up (e.g. `"8.4"`) |
+| `e2e-command` | no | `composer tests:e2e` | Composer script to run. `.env` is copied from `.example.env` automatically unless the command contains `:remote`. |
+
+On failure, uploads `.runtime/e2e-report.xml` and `test-failures/` as the `e2e-report` artifact (7-day retention).
+
 ### `.github/actions/report` — Coverage Report + SonarQube
 
 Checkout with full history, fetch Infisical secrets, download the coverage artifact,
@@ -73,8 +84,7 @@ composite action at `.github/actions/setup-php-composer/`, which calls
 |---|---|---|
 | `php-version-primary` | yes | PHP version for coverage run and SonarQube (e.g. `"8.4"`) |
 | `php-versions-matrix` | no | JSON array of PHP versions for matrix compatibility checks (e.g. `'["8.4","8.5"]'`). Defaults to `["8.4","8.5","8.6"]`. |
-| `e2e-router` | no | Path to the PHP built-in server router script for E2E tests. Defaults to `ci/router.php`. |
-| `skip-e2e` | no | Skip E2E tests (for projects without Playwright setup). Defaults to `false`. |
+| `skip-e2e` | no | Skip E2E tests (for projects without E2E setup). Defaults to `false`. |
 
 **Secrets**
 
@@ -87,9 +97,11 @@ None — all secrets are managed by Infisical (see above).
 | `composer validate --strict` | Validate `composer.json` structure |
 | `composer phpcs` | Code style check |
 | `composer phpstan` | Static analysis |
+| `composer tests:e2e` | E2E tests (skipped when `skip-e2e: true`) |
 
 Tests are run with `./vendor/bin/phpunit -c phpunit.xml`.
 Coverage output must be written to `./.runtime/coverage.xml`.
+On E2E failure, uploads `.runtime/e2e-report.xml` and `test-failures/` as the `e2e-report` artifact.
 
 ---
 
@@ -160,25 +172,28 @@ The workflow performs an HTTP check with a 15-second timeout. A 2xx or 3xx respo
 
 ---
 
-### `e2e-reusable.yml` — E2E Tests
+### `e2e-reusable.yml` — E2E Tests (remote)
 
-Runs Playwright end-to-end tests against a deployed website.
+Runs Composer-based end-to-end tests against a remote environment via the shared
+`.github/actions/e2e` composite action.
 
 **Inputs**
 
 | Input | Required | Default | Description |
 |---|---|---|---|
-| `base-url` | yes | — | URL of the deployed website to run Playwright tests against |
-| `node-version` | no | `"24"` | Node.js version to use |
-| `e2e-command` | no | `"e2e"` | npm script to run (`npm run <e2e-command>`) |
+| `php-version-primary` | yes | — | PHP version to set up (e.g. `"8.4"`) |
 
 **Secrets**
 
-None.
+None — secrets are managed by Infisical (see above).
 
-**Prerequisites**
+**Composer scripts expected**
 
-The calling repository must have a `package.json` with the configured npm script (default `e2e`) that invokes Playwright. The `BASE_URL` environment variable is set automatically from the `base-url` input.
+| Script | Purpose |
+|---|---|
+| `composer tests:e2e:remote` | Run E2E tests against a remote environment |
+
+On failure, uploads `.runtime/e2e-report.xml` and `test-failures/` as the `e2e-report` artifact.
 
 ---
 
@@ -227,7 +242,5 @@ jobs:
     needs: deploy
     uses: nest-forges/.github/.github/workflows/e2e-reusable.yml@main
     with:
-      base-url: "https://example.com"
-      # node-version: "24"   # optional, default "24"
-      # e2e-command: "e2e"   # optional, default "e2e"
+      php-version-primary: "8.4"
 ```

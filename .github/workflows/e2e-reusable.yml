@@ -3,44 +3,18 @@ name: 🎭 E2E Tests (Reusable)
 on:
   workflow_call:
     inputs:
-      e2e-command:
-        required: true
+      php-version-primary:
+        description: 'Primary PHP version'
         type: string
-        description: Composer script to run for remote E2E tests (e.g. "tests:e2e:remote")
+        required: true
 
 jobs:
   e2e:
     name: 🎭 E2E Tests
     runs-on: ubuntu-latest
     steps:
-      - name: 🛒 Checkout
-        uses: actions/checkout@v7
-
-      - name: 🐘 Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.4"
-          extensions: xdebug
-
-      - name: 📦 Install dependencies
-        run: composer install --no-interaction --prefer-dist
-
       - name: 🧪 Run E2E tests
-        env:
-          E2E_CMD: ${{ inputs.e2e-command }}
-        run: |
-          case "$E2E_CMD" in
-            tests:e2e|tests:e2e:remote) ;;
-            *) echo "❌ Invalid e2e-command: $E2E_CMD" && exit 1 ;;
-          esac
-          composer "$E2E_CMD"
-
-      - name: 📤 Upload report on failure
-        if: failure()
-        uses: actions/upload-artifact@v7
+        uses: nest-forges/.github/.github/actions/e2e@main
         with:
-          name: e2e-report
-          path: |
-            .runtime/e2e-report.xml
-            test-failures/
-          retention-days: 7
+          php-version: ${{ inputs.php-version-primary }}
+          e2e-command: composer tests:e2e:remote

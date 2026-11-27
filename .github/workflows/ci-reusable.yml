@@ -15,10 +15,6 @@ on:
         description: 'Skip E2E tests (for projects without Playwright setup)'
         type: boolean
         default: false
-      e2e-command:
-        required: true
-        type: string
-        description: Composer script to run for E2E tests
 
 jobs:
   security:
@@ -97,33 +93,10 @@ jobs:
     if: ${{ !inputs.skip-e2e }}
     needs: [security, lint]
     steps:
-      - name: 🐘 Setup PHP + Composer
-        uses: nest-forges/.github/.github/actions/setup-php-composer@main
+      - name: 🧪 Run E2E tests
+        uses: nest-forges/.github/.github/actions/e2e@main
         with:
           php-version: ${{ inputs.php-version-primary }}
-
-      - name: 📄 Copy .env from example
-        run: cp app/configs/env/.example.env app/configs/env/.env
-
-      - name: 🧪 Run E2E tests
-        env:
-          E2E_CMD: ${{ inputs.e2e-command }}
-        run: |
-          case "$E2E_CMD" in
-            tests:e2e|tests:e2e:remote) ;;
-            *) echo "❌ Invalid e2e-command: $E2E_CMD" && exit 1 ;;
-          esac
-          composer "$E2E_CMD"
-
-      - name: 📤 Upload report on failure
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: e2e-report
-          path: |
-            .runtime/e2e-report.xml
-            test-failures/
-          retention-days: 7
 
   report:
     name: 📊 Coverage & SonarQube

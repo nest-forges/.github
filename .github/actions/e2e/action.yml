@@ -1,0 +1,38 @@
+name: 🧪 Run E2E tests
+description: Set up PHP + Composer, copy .env for local runs, run E2E tests and upload a report on failure.
+
+inputs:
+  php-version:
+    required: true
+    description: PHP version to set up (e.g. "8.4")
+  e2e-command:
+    required: false
+    default: composer tests:e2e
+    description: Composer script to run E2E tests (e.g. "composer tests:e2e" or "composer tests:e2e:remote")
+
+runs:
+  using: composite
+  steps:
+    - name: 🐘 Setup PHP + Composer
+      uses: nest-forges/.github/.github/actions/setup-php-composer@main
+      with:
+        php-version: ${{ inputs.php-version }}
+
+    - name: 📄 Copy .env from example
+      if: ${{ !contains(inputs.e2e-command, ':remote') }}
+      shell: bash
+      run: cp app/configs/env/.example.env app/configs/env/.env
+
+    - name: 🧪 Run E2E tests
+      shell: bash
+      run: ${{ inputs.e2e-command }}
+
+    - name: 📤 Upload report on failure
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: e2e-report
+        path: |
+          .runtime/e2e-report.xml
+          test-failures/
+        retention-days: 7
