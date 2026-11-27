@@ -18,10 +18,7 @@ on:
       e2e-command:
         required: true
         type: string
-        description: npm script to run for E2E tests
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+        description: Composer script to run for E2E tests
 
 jobs:
   security:
@@ -108,26 +105,24 @@ jobs:
       - name: 📄 Copy .env from example
         run: cp app/configs/env/.example.env app/configs/env/.env
 
-      - name: 🟩 Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-
-      - name: 📦 Install Node dependencies
-        run: npm ci
-
-      - name: 🎭 Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
       - name: 🧪 Run E2E tests
-        run: npm run ${{ inputs.e2e-command }}
+        env:
+          E2E_CMD: ${{ inputs.e2e-command }}
+        run: |
+          case "$E2E_CMD" in
+            tests:e2e|tests:e2e:remote) ;;
+            *) echo "❌ Invalid e2e-command: $E2E_CMD" && exit 1 ;;
+          esac
+          composer "$E2E_CMD"
 
-      - name: 📤 Upload Playwright report on failure
+      - name: 📤 Upload report on failure
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: playwright-report
-          path: playwright-report/
+          name: e2e-report
+          path: |
+            .runtime/e2e-report.xml
+            test-failures/
           retention-days: 7
 
   report:

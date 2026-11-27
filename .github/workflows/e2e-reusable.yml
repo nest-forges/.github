@@ -3,19 +3,10 @@ name: 🎭 E2E Tests (Reusable)
 on:
   workflow_call:
     inputs:
-      base-url:
-        required: true
-        type: string
-        description: URL of the deployed website to run Playwright tests against
-      node-version:
-        required: false
-        type: string
-        default: "24"
-        description: Node.js version to use (default "24")
       e2e-command:
         required: true
         type: string
-        description: npm script to run for remote E2E tests (e.g. "e2e:remote")
+        description: Composer script to run for remote E2E tests (e.g. "tests:e2e:remote")
 
 jobs:
   e2e:
@@ -25,18 +16,31 @@ jobs:
       - name: 🛒 Checkout
         uses: actions/checkout@v7
 
-      - name: 🟩 Set up Node
-        uses: actions/setup-node@v7
+      - name: 🐘 Set up PHP
+        uses: shivammathur/setup-php@v2
         with:
-          node-version: ${{ inputs.node-version }}
+          php-version: "8.4"
+          extensions: xdebug
 
       - name: 📦 Install dependencies
-        run: npm ci
-
-      - name: 🎭 Install Playwright
-        run: npx playwright install --with-deps chromium
+        run: composer install --no-interaction --prefer-dist
 
       - name: 🧪 Run E2E tests
-        run: npm run ${{ inputs.e2e-command }}
         env:
-          BASE_URL: ${{ inputs.base-url }}
+          E2E_CMD: ${{ inputs.e2e-command }}
+        run: |
+          case "$E2E_CMD" in
+            tests:e2e|tests:e2e:remote) ;;
+            *) echo "❌ Invalid e2e-command: $E2E_CMD" && exit 1 ;;
+          esac
+          composer "$E2E_CMD"
+
+      - name: 📤 Upload report on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-report
+          path: |
+            .runtime/e2e-report.xml
+            test-failures/
+          retention-days: 7
